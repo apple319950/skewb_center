@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#071019" />
+    <meta name="description" content="Skewb EG2 中心排列辨識練習器，支援 Full 16、Basic 9、隨機配色方向、統計與鍵盤操作。" />
+    <title>EG² Center Trainer</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+
+    <main class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="EG2 Center Trainer 首頁">
+          <span class="brand-mark">EG²</span>
+          <span>
+            <strong>Center Trainer</strong>
+            <small>Skewb recognition lab</small>
+          </span>
+        </a>
+        <div class="status-pill"><span></span> Center-only drill</div>
+      </header>
+
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow">SKEWB · EG2 RECOGNITION</p>
+          <h1 id="hero-title">看中心，<br /><span>直接認排列。</span></h1>
+          <p class="hero-copy">固定 EG2 角塊狀態，只換中心。練到看到中心排列就能直接反應 case，不需要先在腦中轉回固定配色。</p>
+        </div>
+        <div class="hero-tags" aria-label="功能摘要">
+          <span>Full 16</span><span>Basic 9</span><span>24 orientations</span>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="練習統計">
+        <article><span>首答正確</span><strong id="stat-correct">0</strong></article>
+        <article><span>正確率</span><strong id="stat-rate">—</strong></article>
+        <article><span>連續答對</span><strong id="stat-streak">0</strong></article>
+        <article><span>本題時間</span><strong id="stat-time">0.00s</strong></article>
+      </section>
+
+      <section class="trainer-grid">
+        <article class="panel puzzle-panel">
+          <div class="panel-head">
+            <div>
+              <p class="panel-kicker">QUESTION</p>
+              <h2>判斷這個 EG2</h2>
+            </div>
+            <span class="question-number" id="question-number">#001</span>
+          </div>
+
+          <div class="cube-stage">
+            <svg id="cube" viewBox="0 0 431 232" role="img" aria-label="Skewb EG2 五面展開圖"></svg>
+            <div class="orientation-note" id="orientation-note">Color neutral · orientation 01</div>
+          </div>
+
+          <div class="feedback" id="feedback" aria-live="polite">選一個你看到的排列</div>
+
+          <div class="puzzle-actions">
+            <button class="button ghost" id="give-up" type="button">看答案 <kbd>0</kbd></button>
+            <button class="button primary" id="next" type="button" hidden>下一題 <kbd>→</kbd></button>
+          </div>
+        </article>
+
+        <article class="panel answers-panel">
+          <div class="answer-top">
+            <div>
+              <p class="panel-kicker">ANSWER</p>
+              <h2>你看到哪一種？</h2>
+            </div>
+            <div class="segmented" role="group" aria-label="答題模式">
+              <button type="button" data-mode="full" class="active">Full 16</button>
+              <button type="button" data-mode="basic">Basic 9</button>
+            </div>
+          </div>
+
+          <div class="answer-grid" id="answers"></div>
+          <p class="key-note">鍵盤：<b>1–9</b>，其餘依序 <b>Q W E R T Y U</b> · <b>0</b> 看答案</p>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel settings-panel">
+          <div class="panel-head compact">
+            <div><p class="panel-kicker">SETTINGS</p><h2>練習設定</h2></div>
+          </div>
+          <label class="setting-row">
+            <span><strong>隨機配色方向</strong><small>24 種合法 whole-cube color rotations</small></span>
+            <input id="random-orientation" type="checkbox" checked /><i></i>
+          </label>
+          <label class="setting-row">
+            <span><strong>顯示角塊參考</strong><small>固定 EG2 corner stickers；關掉後只看中心</small></span>
+            <input id="show-corners" type="checkbox" checked /><i></i>
+          </label>
+          <label class="setting-row">
+            <span><strong>答題音效</strong><small>正確與錯誤提示音</small></span>
+            <input id="sound" type="checkbox" /><i></i>
+          </label>
+          <button class="reset-button" id="reset-stats" type="button">重設統計</button>
+        </article>
+
+        <article class="panel case-panel">
+          <div class="panel-head compact">
+            <div><p class="panel-kicker">CASE KEY</p><h2>Full 16 case</h2></div>
+            <span class="tiny-note">family mode 會合併 1 / 2</span>
+          </div>
+          <div class="case-key" aria-label="EG2 case 列表">
+            <span>H</span><span>Z</span><span>U1</span><span>U2</span>
+            <span>TS1</span><span>TS2</span><span>ZC1</span><span>ZC2</span>
+            <span>O1</span><span>O2</span><span>X1</span><span>X2</span>
+            <span>W1</span><span>W2</span><span>S1</span><span>S2</span>
+          </div>
+          <p class="case-note">Full 16 練鏡像方向；Basic 9 只判斷 H / Z / U / TS / ZC / O / X / W / S family。</p>
+        </article>
+      </section>
+
+      <footer>
+        <span>EG² CENTER TRAINER · static / GitHub Pages ready</span>
+        <span>資料以 EG2 Ori 132–147 中心狀態建立</span>
+      </footer>
+    </main>
+  </body>
+</html>
