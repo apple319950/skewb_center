@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>EG2 Center Trainer</title>
+  <style>
+:root {
+  --bg: #f7fbfb;
+  --surface: #ffffff;
+  --surface-2: #f1f7f7;
+  --ink: #142a2d;
+  --muted: #547176;
+  --line: #c8d9da;
+  --line-heavy: #79999d;
+  --accent: #0f6f73;
+  --error-bg: #ffd9d9;
+  --success-bg: #cff1d5;
+  --shadow: 0 14px 40px rgba(28, 71, 76, 0.08);
+}
+
+html[data-theme="dark"] {
+  --bg: #101819;
+  --surface: #172224;
+  --surface-2: #1d2b2d;
+  --ink: #eaf5f5;
+  --muted: #a9c0c2;
+  --line: #34494c;
+  --line-heavy: #789295;
+  --accent: #83d7dc;
+  --error-bg: #5d2727;
+  --success-bg: #1d5530;
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] {
+    --bg: #101819;
+    --surface: #172224;
+    --surface-2: #1d2b2d;
+    --ink: #eaf5f5;
+    --muted: #a9c0c2;
+    --line: #34494c;
+    --line-heavy: #789295;
+    --accent: #83d7dc;
+    --error-bg: #5d2727;
+    --success-bg: #1d5530;
+    --shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.45;
+}
+button, input { font: inherit; }
+button { color: inherit; }
+
+.shell { width: min(1160px, calc(100% - 32px)); margin-inline: auto; }
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+.header-row { min-height: 64px; display: flex; align-items: center; gap: 22px; }
+.brand { font-size: 1.08rem; font-weight: 750; color: var(--ink); text-decoration: none; }
+.nav { display: flex; gap: 16px; margin-right: auto; }
+.nav a { color: var(--muted); text-decoration: none; }
+.nav a:hover { color: var(--ink); }
+.main { padding-block: 34px 50px; }
+.title-row { display: flex; align-items: center; gap: 16px; }
+h1 { margin: 0; font-size: clamp(1.9rem, 4vw, 2.55rem); letter-spacing: -0.03em; }
+h2 { margin: 24px 0 18px; font-size: 1.5rem; }
+h3 { margin: 0 0 12px; font-size: 1.22rem; }
+
+.trainer-grid {
+  display: grid;
+  grid-template-columns: minmax(340px, 1.05fr) minmax(210px, 0.72fr) minmax(280px, 0.95fr);
+  column-gap: 64px;
+  row-gap: 28px;
+  align-items: start;
+}
+.question-column { min-width: 0; }
+.score { margin-bottom: 10px; color: var(--muted); }
+
+.pill {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 8px 16px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform 130ms ease, border-color 130ms ease, background 130ms ease;
+}
+.pill:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--line-heavy); }
+.pill:disabled { opacity: 0.55; cursor: default; }
+.pill.small { padding: 6px 13px; font-size: 0.9rem; }
+
+.skewb-box {
+  width: min(100%, 440px);
+  margin-top: 15px;
+  background: transparent;
+}
+.skewb-box svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.answer-list { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.answer-button {
+  width: 148px;
+  text-align: center;
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 8px 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform 130ms ease, border-color 130ms ease, background 90ms ease;
+}
+.answer-button:hover { transform: translateY(-1px); border-color: var(--line-heavy); }
+.answer-button.error { background: var(--error-bg); }
+.answer-button.correct { background: var(--success-bg); }
+
+.option-line { display: block; margin: 4px 0; cursor: pointer; }
+.option-line input { margin: 0 7px 0 0; accent-color: var(--accent); }
+.option-spacer { height: 14px; }
+
+.keybind-editor { margin-top: 12px; display: grid; gap: 7px; }
+.keybind-row { display: grid; grid-template-columns: 72px 80px 70px; gap: 7px; align-items: center; font-size: 0.92rem; }
+.keybind-key { color: var(--muted); }
+.keybind-row .pill { padding: 5px 10px; font-size: 0.86rem; }
+.keybind-editor[hidden] { display: none; }
+
+.site-footer { border-top: 1px solid var(--line); color: var(--muted); padding: 22px 0 30px; font-size: 0.88rem; }
+
+@media (max-width: 960px) {
+  .trainer-grid { grid-template-columns: minmax(300px, 1fr) minmax(200px, .65fr); column-gap: 34px; }
+  .options-column { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .shell { width: min(100% - 22px, 1160px); }
+  .header-row { gap: 14px; }
+  .trainer-grid { grid-template-columns: 1fr; }
+  .answers-column, .options-column { grid-column: auto; }
+  .answer-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .answer-button { width: 100%; }
+  .skewb-box { width: 100%; max-width: 430px; }
+}
+
+</style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-row">
+      <a class="brand" href="#">Skewb Resources</a>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="#trainer">Trainer</a>
+      </nav>
+      <button id="themeButton" class="pill small" type="button" aria-label="Theme">Auto</button>
+    </div>
+  </header>
+
+  <main id="trainer" class="shell main">
+    <div class="title-row">
+      <h1>Skewb Trainer</h1>
+      <button id="muteButton" class="pill small" type="button">Mute</button>
+    </div>
+
+    <h2>EG2 Center Trainer</h2>
+
+    <div class="trainer-grid">
+      <section class="question-column" aria-label="Question">
+        <div id="score" class="score">0/0 answered correctly</div>
+        <button id="giveUpButton" class="pill" type="button">I give up</button>
+        <div id="skewbMount" class="skewb-box" aria-label="Skewb center recognition question"></div>
+      </section>
+
+      <section class="answers-column" aria-label="Answers">
+        <div id="answerButtons" class="answer-list"></div>
+      </section>
+
+      <section class="options-column" aria-label="Options">
+        <form id="optionsForm">
+          <h3>Options</h3>
+
+          <label class="option-line"><input type="radio" name="trainerType" value="HorizontalU" checked /> Show Horizontal U centers (LFR)</label>
+          <label class="option-line"><input type="radio" name="trainerType" value="O" /> Show O centers (FRU)</label>
+          <label class="option-line"><input type="radio" name="trainerType" value="VerticalU" /> Show Vertical U centers (FUB)</label>
+          <label class="option-line"><input type="radio" name="trainerType" value="Random" /> Show random centers subset</label>
+
+          <div class="option-spacer"></div>
+          <label class="option-line"><input id="showRightCornerColors" type="checkbox" checked /> Show Right Corner Colors</label>
+
+          <div class="option-spacer"></div>
+          <label class="option-line"><input type="radio" name="cubeOrientation" value="UpDown" checked /> Up-down Orientation</label>
+          <label class="option-line"><input type="radio" name="cubeOrientation" value="Sideways" /> Sideways Orientation 1</label>
+          <label class="option-line"><input type="radio" name="cubeOrientation" value="Sideways2" /> Sideways Orientation 2</label>
+
+          <div class="option-spacer"></div>
+          <button id="keybindToggle" class="pill" type="button">Show Keybinds</button>
+          <div id="keybindEditor" class="keybind-editor" hidden></div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell">EG2 Center Trainer · 16 cases · rotation-safe build.</div>
+  </footer>
+
+  <script>
+(() => {
+  "use strict";
+
+  // ---------- Constants ----------
+  const COLORS = {
+    Gray: "rgb(127,127,127)",
+    Orange: "rgb(255,166,0)",
+    Green: "rgb(0,255,0)",
+    Yellow: "rgb(255,255,0)",
+    White: "rgb(255,255,255)",
+    Red: "rgb(255,0,0)",
+    Blue: "rgb(0,0,255)",
+  };
+
+  const SHORT_TO_COLOR = {
+    R: COLORS.Red,
+    G: COLORS.Green,
+    O: COLORS.Orange,
+    B: COLORS.Blue,
+    Y: COLORS.Yellow,
+    W: COLORS.White,
+    X: COLORS.Gray,
+  };
+
+  // Position order used throughout is [L, F, R, B, U].
+  // These are the 16 EG2 Ori representatives in the exact order of the user's
+  // reference image: left-to-right on row 1, then left-to-right on row 2.
+  const EG2_REPRESENTATIVES = [
+    "OBRGY", "GRBOY", "BGROY", "RYOGB",
+    "OYRBG", "RYBOG", "ORBYG", "OYBGR",
+    "ORYGB", "GBORY", "RYGBO", "ROYBG",
+    "BORYG", "ROGYB", "BRGYO", "GOBYR",
+  ];
+
+  const EG2_NAMES = [
+    "H", "Z", "U右", "斜左",
+    "斜右", "上左", "上右", "N左",
+    "N右", "U左", "V左", "V右",
+    "下左", "下右", "無前", "無後",
+  ];
+
+  const TRAINER_TYPES = ["HorizontalU", "O", "VerticalU"];
+  const BASE = "RGOBY"; // solved center order [L,F,R,B,U]
+  const SIDE_COLOR_CYCLE = { R: "G", G: "O", O: "B", B: "R", Y: "Y" };
+
+  const DEFAULT_KEYBINDS = [
+    "Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8",
+    "Digit9", "Digit0", "KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY",
+  ];
+
+  // Exact 30-sticker face order: L(0-4), F(5-9), D(10-14), U(15-19), R(20-24), B(25-29).
+  // Coordinates mirror the original trainer renderer so changing orientation only changes layout,
+  // never sticker meaning.
+  const P = {
+    UpDown: {
+      translate: [10, 10],
+      polys: [
+        [[0,0],[1,1],[0,2]], [[1,1],[2,2],[2,4]], [[1,5],[2,4],[2,6]], [[0,2],[1,5],[0,4]], [[1,1],[2,4],[1,5],[0,2]],
+        [[2,2],[3,3],[2,4]], [[3,3],[4,4],[4,6]], [[3,7],[4,6],[4,8]], [[2,4],[3,7],[2,6]], [[3,3],[4,6],[3,7],[2,4]],
+        [[2,6],[3,7],[2,8]], [[3,7],[4,8],[4,10]], [[3,11],[4,10],[4,12]], [[2,8],[3,11],[2,10]], [[3,7],[4,10],[3,11],[2,8]],
+        [[4,0],[5,1],[3,1]], [[5,1],[6,2],[5,3]], [[5,3],[4,4],[3,3]], [[3,3],[2,2],[3,1]], [[3,1],[5,1],[5,3],[3,3]],
+        [[4,6],[4,4],[5,3]], [[6,2],[6,4],[5,3]], [[6,4],[6,6],[5,7]], [[5,7],[4,8],[4,6]], [[5,3],[6,4],[5,7],[4,6]],
+        [[6,4],[6,2],[7,1]], [[8,0],[8,2],[7,1]], [[8,2],[8,4],[7,5]], [[7,5],[6,6],[6,4]], [[7,1],[8,2],[7,5],[6,4]],
+      ],
+    },
+    Sideways: {
+      translate: [10, 21],
+      polys: [
+        [[2,-2],[3,-1],[1,-1]], [[3,-1],[4,0],[3,1]], [[3,1],[2,2],[1,1]], [[1,1],[0,0],[1,-1]], [[1,-1],[3,-1],[3,1],[1,1]],
+        [[4,0],[5,1],[3,1]], [[5,1],[6,2],[5,3]], [[5,3],[4,4],[3,3]], [[3,3],[2,2],[3,1]], [[3,1],[5,1],[5,3],[3,3]],
+        [[2,2],[3,3],[2,4]], [[3,3],[4,4],[4,6]], [[3,7],[4,6],[4,8]], [[2,4],[3,7],[2,6]], [[3,3],[4,6],[3,7],[2,4]],
+        [[8,2],[8,4],[7,5]], [[7,5],[6,6],[6,4]], [[6,4],[6,2],[7,1]], [[8,0],[8,2],[7,1]], [[7,1],[8,2],[7,5],[6,4]],
+        [[6,2],[6,4],[5,3]], [[6,4],[6,6],[5,7]], [[5,7],[4,8],[4,6]], [[4,6],[4,4],[5,3]], [[5,3],[6,4],[5,7],[4,6]],
+        [[6,6],[6,8],[5,7]], [[6,8],[6,10],[5,11]], [[5,11],[4,12],[4,10]], [[4,10],[4,8],[5,7]], [[5,7],[6,8],[5,11],[4,10]],
+      ],
+    },
+    Sideways2: {
+      translate: [10, 21],
+      polys: [
+        [[4,0],[5,1],[3,1]], [[5,1],[6,2],[5,3]], [[5,3],[4,4],[3,3]], [[3,3],[2,2],[3,1]], [[3,1],[5,1],[5,3],[3,3]],
+        [[6,2],[6,4],[5,3]], [[6,4],[6,6],[5,7]], [[5,7],[4,8],[4,6]], [[4,6],[4,4],[5,3]], [[5,3],[6,4],[5,7],[4,6]],
+        [[2,2],[3,3],[2,4]], [[3,3],[4,4],[4,6]], [[3,7],[4,6],[4,8]], [[2,4],[3,7],[2,6]], [[3,3],[4,6],[3,7],[2,4]],
+        [[8,2],[8,4],[7,5]], [[7,5],[6,6],[6,4]], [[6,4],[6,2],[7,1]], [[8,0],[8,2],[7,1]], [[7,1],[8,2],[7,5],[6,4]],
+        [[6,6],[6,8],[5,7]], [[6,8],[6,10],[5,11]], [[5,11],[4,12],[4,10]], [[4,10],[4,8],[5,7]], [[5,7],[6,8],[5,11],[4,10]],
+        [[2,-2],[3,-1],[1,-1]], [[3,-1],[4,0],[3,1]], [[3,1],[2,2],[1,1]], [[1,1],[0,0],[1,-1]], [[1,-1],[3,-1],[3,1],[1,1]],
+      ],
+    },
+  };
+
+  // ---------- Small math / cube rotations ----------
+  const mod = (a, b) => ((a % b) + b) % b;
+  const sin90 = (n) => [0, 1, 0, -1][mod(n, 4)];
+  const cos90 = (n) => [1, 0, -1, 0][mod(n, 4)];
+
+  function rotationMatrix(axis, th) {
+    const [x, y, z] = axis;
+    const c = cos90(th), s = sin90(th), t = 1 - c;
+    return [
+      [x*x*t+c, x*y*t-z*s, x*z*t+y*s],
+      [x*y*t+z*s, y*y*t+c, y*z*t-x*s],
+      [x*z*t-y*s, y*z*t+x*s, z*z*t+c],
+    ];
+  }
+
+  function mmul(a, b) {
+    return a.map((row, i) => b[0].map((_, j) => row.reduce((sum, v, k) => sum + v * b[k][j], 0)));
+  }
+
+  function mvec(m, v) {
+    return m.map((row) => row.reduce((sum, x, i) => sum + x * v[i], 0));
+  }
+
+  const RX = [0,1,2,3].map(n => rotationMatrix([1,0,0], n));
+  const RY1 = rotationMatrix([0,1,0], 1);
+  const RY2 = rotationMatrix([0,1,0], 2);
+  const RY3 = rotationMatrix([0,1,0], 3);
+  const RZ1 = rotationMatrix([0,0,1], 1);
+  const RZ3 = rotationMatrix([0,0,1], 3);
+  // Only rotate around the U/D axis.
+  // The 16 EG2 labels are defined relative to the EG2 bottom pattern.
+  // X/Z whole-cube rotations change that reference frame and were the source
+  // of cases that looked like a different left/right pattern while keeping the old answer.
+  const CUBE_ROTATIONS = [RX[0], RY1, RY2, RY3];
+
+  const COLOR_AXES = {
+    [COLORS.White]: [0,-1,0],
+    [COLORS.Red]: [-1,0,0],
+    [COLORS.Green]: [0,0,1],
+    [COLORS.Orange]: [1,0,0],
+    [COLORS.Blue]: [0,0,-1],
+    [COLORS.Yellow]: [0,1,0],
+    [COLORS.Gray]: [0,0,0],
+  };
+  const AXIS_TO_COLOR = new Map(Object.entries(COLOR_AXES).map(([color, axis]) => [axis.join(","), color]));
+  function rotateColor(color, rotation) {
+    if (color === COLORS.Gray) return COLORS.Gray;
+    return AXIS_TO_COLOR.get(mvec(rotation, COLOR_AXES[color]).join(","));
+  }
+
+  // ---------- EG2 case classification ----------
+  function cycleColor(c, times) {
+    let out = c;
+    for (let i = 0; i < mod(times, 4); i++) out = SIDE_COLOR_CYCLE[out];
+    return out;
+  }
+
+  // Conjugation by a y-axis quarter turn. This is the symmetry that preserves the
+  // EG2 bottom pattern up to whole-cube reorientation. The 59 non-pure even states
+  // fall into exactly the 16 reference classes.
+  function conjugateY(seq, k) {
+    const p = Object.fromEntries([...BASE].map((face, i) => [face, seq[i]]));
+    return [...BASE].map((face) => cycleColor(p[cycleColor(face, -k)], k)).join("");
+  }
+
+  const CLASS_MAP = new Map();
+  EG2_REPRESENTATIVES.forEach((rep, caseIndex) => {
+    for (let k = 0; k < 4; k++) CLASS_MAP.set(conjugateY(rep, k), caseIndex);
+  });
+
+  function parity(seq) {
+    const idx = [...seq].map(c => BASE.indexOf(c));
+    let inv = 0;
+    for (let i = 0; i < idx.length; i++) for (let j = i + 1; j < idx.length; j++) if (idx[i] > idx[j]) inv++;
+    return inv % 2;
+  }
+
+  function permutations(str) {
+    const out = [];
+    function rec(prefix, rest) {
+      if (!rest.length) { out.push(prefix); return; }
+      for (let i = 0; i < rest.length; i++) rec(prefix + rest[i], rest.slice(0, i) + rest.slice(i + 1));
+    }
+    rec("", str);
+    return out;
+  }
+
+  const QUESTION_STATES = permutations(BASE).filter(s => parity(s) === 0 && s !== BASE && CLASS_MAP.has(s));
+
+  // ---------- Persistent settings ----------
+  const STORAGE_KEY = "eg2-center-trainer-settings-v1";
+  const KEYBIND_KEY = "eg2-center-trainer-keybinds-v1";
+  const THEME_KEY = "eg2-center-trainer-theme-v1";
+
+  const options = Object.assign({
+    trainerType: "HorizontalU",
+    showRightCornerColors: true,
+    cubeOrientation: "UpDown",
+  }, safeReadJSON(STORAGE_KEY, {}));
+
+  let keybinds = safeReadJSON(KEYBIND_KEY, DEFAULT_KEYBINDS);
+  if (!Array.isArray(keybinds) || keybinds.length !== 16) keybinds = [...DEFAULT_KEYBINDS];
+
+  function safeReadJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch { return fallback; }
+  }
+  function saveOptions() { localStorage.setItem(STORAGE_KEY, JSON.stringify(options)); }
+  function saveKeybinds() { localStorage.setItem(KEYBIND_KEY, JSON.stringify(keybinds)); }
+
+  // ---------- Trainer state ----------
+  let currentQuestion = null;
+  let correctQuestions = 0;
+  let totalQuestions = 0;
+  let wrongThisQuestion = new Set();
+  let answeredCorrectCase = null;
+  let muted = false;
+  let keybindEditorOn = false;
+  let editingCase = null;
+
+  function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function generateQuestion() {
+    // Generate from the case itself instead of classifying an arbitrary state afterward.
+    // This guarantees that the displayed case and the answer label stay locked together.
+    const caseIndex = Math.floor(Math.random() * EG2_REPRESENTATIVES.length);
+    const yVariant = Math.floor(Math.random() * 4);
+    const centers = conjugateY(EG2_REPRESENTATIVES[caseIndex], yVariant);
+
+    currentQuestion = {
+      centers,
+      caseIndex,
+      rotation: randomChoice(CUBE_ROTATIONS),
+      randomTrainerType: randomChoice(TRAINER_TYPES),
+    };
+    wrongThisQuestion = new Set();
+    answeredCorrectCase = null;
+    renderAll();
+  }
+
+  function chosenTrainerType() {
+    return options.trainerType === "Random" ? currentQuestion.randomTrainerType : options.trainerType;
+  }
+
+  // Base EG2 bottom side stickers, read in the same renderer indices as the NS trainer.
+  // NS uses L=(R,R), F=(G,G), R=(O,O); EG2 changes only those bottom-layer side stickers:
+  // L=(O,R), F=(G,B), R=(R,O). D face remains all white and U-layer corners remain hidden.
+  function rendererState() {
+    const state = Array(30).fill(COLORS.Gray);
+    const tt = chosenTrainerType();
+    const centerColors = [...currentQuestion.centers].map(c => SHORT_TO_COLOR[c]);
+
+    // Fixed bottom D face: exact same placement as original NS trainer.
+    for (let i = 10; i <= 14; i++) state[i] = COLORS.White;
+
+    // Only the same three recognition centers are revealed.
+    if (tt === "HorizontalU") {
+      state[4] = centerColors[0]; // L
+      state[9] = centerColors[1]; // F
+      state[24] = centerColors[2]; // R
+      state[2] = COLORS.Orange;
+      state[3] = COLORS.Red;
+    }
+    if (tt === "O") {
+      state[9] = centerColors[1]; // F
+      state[19] = centerColors[4]; // U
+      state[24] = centerColors[2]; // R
+    }
+    if (tt === "VerticalU") {
+      state[9] = centerColors[1]; // F
+      state[19] = centerColors[4]; // U
+      state[29] = centerColors[3]; // B
+    }
+
+    // F-side bottom stickers are visible in all 3 original subsets.
+    state[7] = COLORS.Green;
+    state[8] = COLORS.Blue;
+
+    // Original option behavior: reveal/hide the R-side bottom pair.
+    if (options.showRightCornerColors) {
+      state[22] = COLORS.Red;
+      state[23] = COLORS.Orange;
+    }
+
+    // Every visible sticker (including bottom color) receives the same random whole-cube
+    // color rotation as the NS trainer. Gray stays gray.
+    return state.map(c => rotateColor(c, currentQuestion.rotation));
+  }
+
+  // ---------- SVG renderer ----------
+  function buildSVG(state) {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 160 140");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "EG2 center recognition Skewb diagram");
+
+    const xsc = Math.sqrt(3) * 10;
+    const ysc = 10;
+    const spec = P[options.cubeOrientation] || P.UpDown;
+    const [tx, ty] = spec.translate;
+
+    spec.polys.forEach((poly, i) => {
+      const el = document.createElementNS(ns, "polygon");
+      const pts = poly.map(([x,y]) => `${x * xsc + tx} ${y * ysc + ty}`).join(" ");
+      el.setAttribute("points", pts);
+      el.setAttribute("fill", state[i]);
+      el.setAttribute("stroke", "black");
+      el.setAttribute("stroke-width", "0.5");
+      el.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(el);
+    });
+    return svg;
+  }
+
+  // ---------- UI ----------
+  const els = {
+    score: document.getElementById("score"),
+    giveUpButton: document.getElementById("giveUpButton"),
+    skewbMount: document.getElementById("skewbMount"),
+    answerButtons: document.getElementById("answerButtons"),
+    optionsForm: document.getElementById("optionsForm"),
+    showRight: document.getElementById("showRightCornerColors"),
+    muteButton: document.getElementById("muteButton"),
+    themeButton: document.getElementById("themeButton"),
+    keybindToggle: document.getElementById("keybindToggle"),
+    keybindEditor: document.getElementById("keybindEditor"),
+  };
+
+  function renderAll() {
+    renderScore();
+    renderDiagram();
+    renderAnswers();
+    syncOptionsUI();
+    renderKeybindEditor();
+  }
+
+  function renderScore() {
+    els.score.textContent = `${correctQuestions}/${totalQuestions} answered correctly`;
+  }
+
+  function renderDiagram() {
+    els.skewbMount.replaceChildren(buildSVG(rendererState()));
+  }
+
+  function renderAnswers() {
+    els.answerButtons.replaceChildren();
+    EG2_REPRESENTATIVES.forEach((_, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "answer-button";
+      if (wrongThisQuestion.has(i)) btn.classList.add("error");
+      if (answeredCorrectCase === i) btn.classList.add("correct");
+      btn.textContent = EG2_NAMES[i];
+      btn.title = `EG2 ${String(i + 1).padStart(2, "0")} · ${EG2_NAMES[i]}`;
+      btn.addEventListener("click", () => selectCase(i));
+      els.answerButtons.appendChild(btn);
+    });
+  }
+
+  function syncOptionsUI() {
+    const trainerRadio = els.optionsForm.querySelector(`input[name="trainerType"][value="${options.trainerType}"]`);
+    const orientationRadio = els.optionsForm.querySelector(`input[name="cubeOrientation"][value="${options.cubeOrientation}"]`);
+    if (trainerRadio) trainerRadio.checked = true;
+    if (orientationRadio) orientationRadio.checked = true;
+    els.showRight.checked = !!options.showRightCornerColors;
+  }
+
+  function humanKey(code) {
+    return code.replace(/^(Key|Digit)/, "").replace("Space", "Space");
+  }
+
+  function renderKeybindEditor() {
+    els.keybindEditor.hidden = !keybindEditorOn;
+    els.keybindToggle.textContent = keybindEditorOn ? "Save Changes" : "Show Keybinds";
+    if (!keybindEditorOn) { els.keybindEditor.replaceChildren(); return; }
+
+    els.keybindEditor.replaceChildren();
+    EG2_REPRESENTATIVES.forEach((_, i) => {
+      const row = document.createElement("div");
+      row.className = "keybind-row";
+      const label = document.createElement("span");
+      label.textContent = `EG2 ${String(i + 1).padStart(2, "0")}`;
+      const key = document.createElement("span");
+      key.className = "keybind-key";
+      key.textContent = `${humanKey(keybinds[i])} key`;
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "pill";
+      edit.textContent = editingCase === i ? "Press!" : "Edit";
+      edit.disabled = editingCase !== null && editingCase !== i;
+      edit.addEventListener("click", () => { editingCase = i; renderKeybindEditor(); edit.blur(); });
+      row.append(label, key, edit);
+      els.keybindEditor.appendChild(row);
+    });
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "pill";
+    reset.textContent = "Reset Keybinds";
+    reset.disabled = editingCase !== null;
+    reset.addEventListener("click", () => { keybinds = [...DEFAULT_KEYBINDS]; saveKeybinds(); renderKeybindEditor(); });
+    els.keybindEditor.appendChild(reset);
+  }
+
+  function selectCase(i) {
+    if (keybindEditorOn) return;
+    if (i === currentQuestion.caseIndex) {
+      playTone(true);
+      if (wrongThisQuestion.size === 0) {
+        correctQuestions++;
+        totalQuestions++;
+      }
+      answeredCorrectCase = i;
+      generateQuestion();
+      // Keep the just-correct answer highlighted for 300 ms, as in the original trainer.
+      renderAnswers();
+      setTimeout(() => { answeredCorrectCase = null; renderAnswers(); }, 300);
+    } else {
+      playTone(false);
+      if (wrongThisQuestion.size === 0) totalQuestions++;
+      wrongThisQuestion.add(i);
+      answeredCorrectCase = null;
+      renderScore();
+      renderAnswers();
+    }
+  }
+
+  function giveUp() {
+    playTone(false);
+    if (wrongThisQuestion.size === 0) totalQuestions++;
+    for (let i = 0; i < 16; i++) if (i !== currentQuestion.caseIndex) wrongThisQuestion.add(i);
+    answeredCorrectCase = null;
+    renderScore();
+    renderAnswers();
+  }
+
+  function playTone(correct) {
+    if (muted) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = correct ? 660 : 180;
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (correct ? 0.12 : 0.18));
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + (correct ? 0.12 : 0.18));
+      osc.addEventListener("ended", () => ctx.close());
+    } catch { /* audio is optional */ }
+  }
+
+  // ---------- Events ----------
+  els.giveUpButton.addEventListener("click", giveUp);
+
+  els.optionsForm.addEventListener("change", (e) => {
+    const t = e.target;
+    if (t.name === "trainerType") options.trainerType = t.value;
+    if (t.name === "cubeOrientation") options.cubeOrientation = t.value;
+    if (t.id === "showRightCornerColors") options.showRightCornerColors = t.checked;
+    saveOptions();
+    renderDiagram();
+  });
+
+  els.muteButton.addEventListener("click", () => {
+    muted = !muted;
+    els.muteButton.textContent = muted ? "Unmute" : "Mute";
+  });
+
+  els.keybindToggle.addEventListener("click", () => {
+    keybindEditorOn = !keybindEditorOn;
+    editingCase = null;
+    renderKeybindEditor();
+    els.keybindToggle.blur();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (editingCase !== null) {
+      e.preventDefault();
+      const oldIndex = keybinds.indexOf(e.code);
+      if (oldIndex >= 0 && oldIndex !== editingCase) {
+        [keybinds[oldIndex], keybinds[editingCase]] = [keybinds[editingCase], keybinds[oldIndex]];
+      } else {
+        keybinds[editingCase] = e.code;
+      }
+      editingCase = null;
+      saveKeybinds();
+      renderKeybindEditor();
+      return;
+    }
+    if (keybindEditorOn || e.repeat) return;
+    const i = keybinds.indexOf(e.code);
+    if (i >= 0) {
+      e.preventDefault();
+      selectCase(i);
+    }
+  });
+
+  // Theme button: Auto -> Light -> Dark -> Auto.
+  const themeModes = ["auto", "light", "dark"];
+  let theme = localStorage.getItem(THEME_KEY) || "auto";
+  if (!themeModes.includes(theme)) theme = "auto";
+  function applyTheme() {
+    document.documentElement.dataset.theme = theme;
+    els.themeButton.textContent = theme[0].toUpperCase() + theme.slice(1);
+    localStorage.setItem(THEME_KEY, theme);
+  }
+  els.themeButton.addEventListener("click", () => {
+    theme = themeModes[(themeModes.indexOf(theme) + 1) % themeModes.length];
+    applyTheme();
+  });
+
+  // ---------- Self-checks ----------
+  function runSelfChecks() {
+    const assert = (condition, message) => { if (!condition) throw new Error(`EG2 trainer self-check failed: ${message}`); };
+    assert(CUBE_ROTATIONS.length === 4, "must have exactly the 4 U/D-axis rotations");
+    assert(CLASS_MAP.size === 59, `16 case orbits should cover 59 non-pure states, got ${CLASS_MAP.size}`);
+    assert(QUESTION_STATES.length === 59, `question pool should contain 59 states, got ${QUESTION_STATES.length}`);
+    assert(!CLASS_MAP.has(BASE), "Pure/Solved RGOBY must remain outside the requested 16 classes");
+    EG2_REPRESENTATIVES.forEach((r, i) => {
+      assert(CLASS_MAP.get(r) === i, `representative ${i + 1} mapping`);
+      for (let k = 0; k < 4; k++) {
+        const v = conjugateY(r, k);
+        assert(CLASS_MAP.get(v) === i, `case ${i + 1} y-rotation ${k} mapping`);
+      }
+    });
+
+    // Every allowed display rotation must map every cube color to another valid color.
+    const palette = [COLORS.White, COLORS.Red, COLORS.Green, COLORS.Orange, COLORS.Blue, COLORS.Yellow, COLORS.Gray];
+    CUBE_ROTATIONS.forEach((rot, ri) => {
+      palette.forEach((c) => assert(palette.includes(rotateColor(c, rot)), `rotation ${ri} keeps ${c} in palette`));
+    });
+
+    // Verify the exact three recognition-center positions are unchanged from NS.
+    const centersByType = {
+      HorizontalU: [4, 9, 24],
+      O: [9, 19, 24],
+      VerticalU: [9, 19, 29],
+    };
+    assert(JSON.stringify(centersByType.HorizontalU) === JSON.stringify([4,9,24]), "LFR center placement");
+    assert(JSON.stringify(centersByType.O) === JSON.stringify([9,19,24]), "FRU center placement");
+    assert(JSON.stringify(centersByType.VerticalU) === JSON.stringify([9,19,29]), "FUB center placement");
+
+    // EG2 fixed bottom side sticker change versus NS: only the corner stickers differ.
+    const nsVisible = { 2:"R", 3:"R", 7:"G", 8:"G", 22:"O", 23:"O" };
+    const eg2Visible = { 2:"O", 3:"R", 7:"G", 8:"B", 22:"R", 23:"O" };
+    assert(Object.keys(nsVisible).join(",") === Object.keys(eg2Visible).join(","), "same bottom-corner sticker positions as NS");
+
+    window.EG2_DEBUG = {
+      representatives: [...EG2_REPRESENTATIVES],
+      classMapSize: CLASS_MAP.size,
+      questionPoolSize: QUESTION_STATES.length,
+      centerIndices: centersByType,
+      eg2BottomVisibleStickerColors: eg2Visible,
+      nsBottomVisibleStickerColors: nsVisible,
+    };
+    console.info("EG2 Center Trainer self-checks passed", window.EG2_DEBUG);
+  }
+
+  // ---------- Start ----------
+  applyTheme();
+  runSelfChecks();
+  syncOptionsUI();
+  generateQuestion();
+})();
+
+</script>
+</body>
+</html>
